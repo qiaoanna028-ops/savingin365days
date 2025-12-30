@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鹹魚翻身計畫 - 365天白柴挑戰</title>
+    <style>
+        /* CSS 樣式區 */
+        :root {
+            --bg-purple: #f3f0ff;
+            --shiba-purple: #9d8df1;
+            --dark-purple: #7267cb;
+            --white: #ffffff;
+            --text: #4a4e69;
+        }
+
+        body {
+            background-color: var(--bg-purple);
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: var(--dark-purple);
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+
+        /* 達成率看板 */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(157, 141, 241, 0.2);
+            border: 2px solid #e6e1ff;
+        }
+
+        .stat-label { font-size: 12px; color: #8e9aaf; display: block; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: var(--dark-purple); }
+
+        /* 進度條 */
+        .progress-section {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .bar-bg {
+            background: #eee;
+            height: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .bar-fill {
+            background: linear-gradient(90deg, #b8c0ff, var(--shiba-purple));
+            height: 100%;
+            width: 0%;
+            transition: width 0.6s ease;
+        }
+
+        /* 額外記帳區 */
+        .extra-box {
+            background: var(--white);
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 2px dashed var(--shiba-purple);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #dcd6f7;
+            border-radius: 8px;
+            width: 80px;
+            outline: none;
+        }
+
+        .btn-add {
+            background: var(--shiba-purple);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* 365天網格 */
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 8px;
+        }
+
+        .cell {
+            background: var(--white);
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1.5px solid #dcd6f7;
+            font-weight: bold;
+            font-size: 13px;
+            transition: transform 0.1s, background-color 0.2s;
+            user-select: none;
+        }
+
+        .cell:active { transform: scale(0.85); }
+        .cell.done { background-color: var(--shiba-purple); color: white; border-color: var(--dark-purple); }
+
+        /* 彈窗 */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 25px;
+            width: 280px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-modal { flex: 1; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-confirm { background: var(--shiba-purple); color: white; }
+        .btn-cancel { background: #eee; color: #666; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div style="font-size: 50px;">🐕‍🦺</div>
+            <h1>✨ 鹹魚翻身計畫 ✨</h1>
+        </header>
+
+        <div class="dashboard">
+            <div class="stat-card">
+                <span class="stat-label">達成率</span>
+                <span id="percent" class="stat-value">0%</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">目前總額</span>
+                <span class="stat-value">$<span id="total">0</span></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">已存天數</span>
+                <span id="days" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
+                <span>白柴翻身進度...</span>
+                <span id="progressLabel">0 / 365</span>
+            </div>
+            <div class="bar-bg"><div id="fill" class="bar-fill"></div></div>
+        </div>
+
+        <div class="extra-box">
+            <span>🦴 額外記帳：</span>
+            <input type="number" id="extraIn" placeholder="金額">
+            <button onclick="addExtra()" class="btn-add">存入</button>
+        </div>
+
+        <div id="grid"></div>
+    </div>
+
+    <div id="modal-overlay">
+        <div class="modal">
+            <div style="font-size: 40px; margin-bottom: 10px;">🐾</div>
+            <h3 style="margin: 0; color: var(--dark-purple);">存款確認</h3>
+            <p id="msg" style="color: #666; font-size: 14px;"></p>
+            <div class="modal-btns">
+                <button onclick="confirmS()" class="btn-modal btn-confirm">確定</button>
+                <button onclick="closeM()" class="btn-modal btn-cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JS 邏輯區
+        let days = JSON.parse(localStorage.getItem('ShibaMainDays')) || [];
+        let extra = JSON.parse(localStorage.getItem('ShibaMainExtra')) || 0;
+        let target = null;
+
+        function draw() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 365; i++) {
+                const isDone = days.includes(i);
+                const cell = document.createElement('div');
+                cell.className = 'cell' + (isDone ? ' done' : '');
+                cell.innerHTML = isDone ? '🐾' : i;
+                cell.onclick = () => {
+                    target = i;
+                    document.getElementById('msg').innerText = isDone ? `要取消第 ${i} 天的存款嗎？` : `今天要存入 ${i} 元並蓋上腳印嗎？`;
+                    document.getElementById('modal-overlay').style.display = 'flex';
+                };
+                grid.appendChild(cell);
+            }
+            update();
+        }
+
+        function confirmS() {
+            if (days.includes(target)) {
+                days = days.filter(x => x !== target);
+            } else {
+                days.push(target);
+            }
+            save();
+            closeM();
+        }
+
+        function closeM() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        function addExtra() {
+            const input = document.getElementById('extraIn');
+            const val = parseInt(input.value);
+            if (val) {
+                extra += val;
+                input.value = '';
+                save();
+            }
+        }
+
+        function save() {
+            localStorage.setItem('ShibaMainDays', JSON.stringify(days));
+            localStorage.setItem('ShibaMainExtra', JSON.stringify(extra));
+            draw();
+        }
+
+        function update() {
+            const gridSum = days.reduce((a, b) => a + b, 0);
+            const total = gridSum + extra;
+            const count = days.length;
+            const percentage = ((count / 365) * 100).toFixed(1) + '%';
+
+            document.getElementById('total').innerText = total.toLocaleString();
+            document.getElementById('days').innerText = count;
+            document.getElementById('percent').innerText = percentage;
+            document.getElementById('progressLabel').innerText = count + ' / 365 天';
+            document.getElementById('fill').style.width = percentage;
+        }
+
+        draw();
+    </script>
+</body>
+</html>
